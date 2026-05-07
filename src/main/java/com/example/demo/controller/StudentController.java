@@ -1,8 +1,10 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.StudentDTO;
 import com.example.demo.model.Student;
-import com.example.demo.repository.StudentRepository;
+import com.example.demo.service.StudentService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,54 +14,80 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Controlador REST para gestionar estudiantes
+ * Endpoints: GET, POST, PUT, DELETE
+ */
 @RestController
 @RequestMapping("/api/students")
 @CrossOrigin(origins = "*")
 public class StudentController {
 
-    private final StudentRepository repository;
+    private final StudentService service;
 
-    public StudentController(StudentRepository repository) {
-        this.repository = repository;
+    public StudentController(StudentService service) {
+        this.service = service;
     }
 
+    /**
+     * GET /api/students - Obtiene todos los estudiantes
+     */
     @GetMapping
-    public List<Student> getAllStudents() {
-        return repository.findAll();
+    public ResponseEntity<List<Student>> getAllStudents() {
+        return ResponseEntity.ok(service.getAllStudents());
     }
 
+    /**
+     * GET /api/students/{id} - Obtiene un estudiante por ID
+     */
     @GetMapping("/{id}")
-    public Student getStudent(@PathVariable Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+    public ResponseEntity<Student> getStudent(@PathVariable Long id) {
+        return service.getStudentById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * POST /api/students - Crea un nuevo estudiante con validaciones
+     */
     @PostMapping
-    public Student createStudent(@RequestBody Student student) {
-        student.setId(null);
-        return repository.save(student);
-    }
-
-    @PutMapping("/{id}")
-    public Student updateStudent(@PathVariable Long id, @RequestBody Student student) {
-        Student existing = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
-        existing.setName(student.getName());
-        existing.setAge(student.getAge());
-        existing.setGrade(student.getGrade());
-        existing.setEmail(student.getEmail());
-        return repository.save(existing);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteStudent(@PathVariable Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found");
+    public ResponseEntity<Student> createStudent(@RequestBody StudentDTO dto) {
+        try {
+            Student student = service.createStudent(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(student);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         }
-        repository.deleteById(id);
+    }
+
+    /**
+     * PUT /api/students/{id} - Actualiza un estudiante existente
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody StudentDTO dto) {
+        try {
+            Student student = service.updateStudent(id, dto);
+            return ResponseEntity.ok(student);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * DELETE /api/students/{id} - Elimina un estudiante
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
+        try {
+            service.deleteStudent(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

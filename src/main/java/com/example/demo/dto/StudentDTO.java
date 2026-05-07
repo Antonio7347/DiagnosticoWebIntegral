@@ -1,67 +1,41 @@
-package com.example.demo.model;
+package com.example.demo.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-/**
- * Entidad Student que representa un estudiante en la base de datos
- */
-@Entity
-@Table(name = "students")
-public class Student {
+public class StudentDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, length = 100)
     @NotBlank(message = "El nombre no puede estar vacío")
     @Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
     private String name;
 
-    @Column(nullable = false)
     @Min(value = 5, message = "La edad mínima es 5 años")
     @Max(value = 120, message = "La edad máxima es 120 años")
     private Integer age;
 
-    @Column(nullable = false, length = 50)
     @NotBlank(message = "El grado no puede estar vacío")
     @Size(min = 1, max = 50, message = "El grado debe tener entre 1 y 50 caracteres")
     private String grade;
 
-    @Column(nullable = false, length = 255, unique = true)
     @NotBlank(message = "El correo no puede estar vacío")
     @Email(message = "El correo debe ser un email válido")
     private String email;
 
-    public Student() {
+    // Constructores
+    public StudentDTO() {
     }
 
-    public Student(Long id, String name, Integer age, String grade, String email) {
-        this.id = id;
+    public StudentDTO(String name, Integer age, String grade, String email) {
         this.name = name;
         this.age = age;
         this.grade = grade;
         this.email = email;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
+    // Getters y Setters
     public String getName() {
         return name;
     }
